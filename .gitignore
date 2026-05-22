@@ -1,0 +1,72 @@
+# ============================================================
+# NeuroVision AI — .gitignore
+# ============================================================
+
+# Environment
+.env
+*.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# ML artifacts (too large for git — use DVC or HuggingFace Hub)
+models/
+*.h5
+*.keras
+*.pkl
+*.onnx
+*.pb
+saved_model/
+
+# Raw data directories — leading slash = root-level only (not src/data/)
+/data/
+
+# Binary array dumps
+*.npy
+*.npz
+
+# Outputs — manifests are committed; logs/plots are regenerable
+outputs/logs/
+outputs/plots/
+outputs/reports/
+
+# IDE
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Type checking
+.mypy_cache/
+
+# Docker
+*.tar
