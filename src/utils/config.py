@@ -93,6 +93,29 @@ class PipelineConfig:
 
 
 @dataclass(frozen=True)
+class SegmentationConfig:
+    architecture: str
+    input_size: tuple[int, int]
+    channels: int
+    filters: list[int]
+    bottleneck_filters: int
+    dropout: float
+    batch_norm: bool
+    batch_size: int
+    epochs: int
+    learning_rate: float
+    min_lr: float
+    early_stopping_patience: int
+    reduce_lr_patience: int
+    reduce_lr_factor: float
+    loss: str
+    tversky_alpha: float
+    tversky_beta: float
+    pseudo_mask_blur: int
+    pseudo_mask_morph_size: int
+
+
+@dataclass(frozen=True)
 class PathConfig:
     dataset_root: Path
     project_root: Path
@@ -112,6 +135,7 @@ class AppConfig:
     version: str
     classes: ClassConfig
     preprocessing: PreprocessingConfig
+    segmentation: SegmentationConfig
     augmentation: AugmentationConfig
     split: SplitConfig
     training: TrainingConfig
@@ -267,6 +291,29 @@ def load_config(config_path: str | Path | None = None) -> AppConfig:
         num_parallel_calls=pl["num_parallel_calls"],
     )
 
+    sg = raw.get("segmentation", {})
+    segmentation = SegmentationConfig(
+        architecture=sg.get("architecture", "AttentionUNet"),
+        input_size=tuple(sg.get("input_size", [256, 256])),
+        channels=sg.get("channels", 1),
+        filters=sg.get("filters", [64, 128, 256, 512]),
+        bottleneck_filters=sg.get("bottleneck_filters", 1024),
+        dropout=sg.get("dropout", 0.30),
+        batch_norm=sg.get("batch_norm", True),
+        batch_size=sg.get("batch_size", 16),
+        epochs=sg.get("epochs", 50),
+        learning_rate=sg.get("learning_rate", 1e-4),
+        min_lr=sg.get("min_lr", 1e-8),
+        early_stopping_patience=sg.get("early_stopping_patience", 10),
+        reduce_lr_patience=sg.get("reduce_lr_patience", 5),
+        reduce_lr_factor=sg.get("reduce_lr_factor", 0.5),
+        loss=sg.get("loss", "bce_dice"),
+        tversky_alpha=sg.get("tversky_alpha", 0.3),
+        tversky_beta=sg.get("tversky_beta", 0.7),
+        pseudo_mask_blur=sg.get("pseudo_mask_blur", 5),
+        pseudo_mask_morph_size=sg.get("pseudo_mask_morph_size", 7),
+    )
+
     config = AppConfig(
         project_name=raw["project"]["name"],
         version=raw["project"]["version"],
@@ -278,6 +325,7 @@ def load_config(config_path: str | Path | None = None) -> AppConfig:
         pipeline=pipeline,
         paths=paths,
         model=raw.get("model", {}),
+        segmentation=segmentation,
     )
 
     logger.info(

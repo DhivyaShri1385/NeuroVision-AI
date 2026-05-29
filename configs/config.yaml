@@ -92,11 +92,27 @@ model:
 
 # ----- Segmentation (Phase 3) -----
 segmentation:
-  architecture: "AttentionUNet"
-  input_size: [256, 256, 1]    # Grayscale for segmentation
-  filters: [64, 128, 256, 512]
+  architecture: "AttentionUNet"   # Options: UNet | AttentionUNet
+  input_size: [256, 256]          # H x W — must be divisible by 2^4 = 16
+  channels: 1                     # Grayscale MRI (no RGB conversion needed)
+  filters: [64, 128, 256, 512]    # Encoder filter progression
+  bottleneck_filters: 1024
   dropout: 0.30
   batch_norm: true
+  batch_size: 16                  # Smaller than classification (masks use 2x memory)
+  epochs: 50
+  learning_rate: 1.0e-4
+  min_lr: 1.0e-8
+  early_stopping_patience: 10
+  reduce_lr_patience: 5
+  reduce_lr_factor: 0.5
+  loss: "bce_dice"                # Options: dice | bce_dice | focal_dice | tversky
+  # Tversky loss params (used when loss="tversky")
+  tversky_alpha: 0.3              # Weight for false negatives (increase to catch more tumors)
+  tversky_beta: 0.7               # Weight for false positives
+  # Pseudo-mask generation (used when real masks are unavailable)
+  pseudo_mask_blur: 5             # Gaussian blur kernel before Otsu thresholding
+  pseudo_mask_morph_size: 7       # Morphological close kernel size
 
 # ----- XAI (Phase 4) -----
 xai:
