@@ -81,6 +81,7 @@ class TrainingConfig:
     dropout_rate: float
     l2_regularization: float
     mixed_precision: bool
+    freeze_base_epochs: int
 
 
 @dataclass(frozen=True)
@@ -116,6 +117,7 @@ class AppConfig:
     training: TrainingConfig
     pipeline: PipelineConfig
     paths: PathConfig
+    model: dict  # Raw model config dict (backbone, ensemble list, etc.)
 
 
 # ---------------------------------------------------------------------------
@@ -254,6 +256,7 @@ def load_config(config_path: str | Path | None = None) -> AppConfig:
         dropout_rate=tr["dropout_rate"],
         l2_regularization=tr["l2_regularization"],
         mixed_precision=tr["mixed_precision"],
+        freeze_base_epochs=tr.get("freeze_base_epochs", 10),
     )
 
     pl = raw["pipeline"]
@@ -274,6 +277,7 @@ def load_config(config_path: str | Path | None = None) -> AppConfig:
         training=training,
         pipeline=pipeline,
         paths=paths,
+        model=raw.get("model", {}),
     )
 
     logger.info(

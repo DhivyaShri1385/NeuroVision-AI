@@ -77,6 +77,7 @@ training:
   dropout_rate: 0.40
   l2_regularization: 1.0e-4
   mixed_precision: true        # Use float16 for faster training on GPU
+  freeze_base_epochs: 10       # Stage 1 — train head only (backbone frozen)
 
 # ----- Model Selection (Phase 2) -----
 model:

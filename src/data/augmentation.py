@@ -108,8 +108,7 @@ class MedicalAugmentationPipeline:
                                    "y": (-cfg.shift_limit, cfg.shift_limit)},
                 scale=(1 - cfg.scale_limit, 1 + cfg.scale_limit),
                 rotate=(-cfg.rotation_limit, cfg.rotation_limit),
-                interpolation=4,     # Lanczos
-                cval=0,              # Black padding value — anatomically safe
+                interpolation=4,     # Lanczos (fill defaults to 0 = black)
                 p=p,
             )
         )

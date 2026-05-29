@@ -1,0 +1,10 @@
+{
+  "accuracy": 0.7143,
+  "macro_precision": 0.7604,
+  "macro_recall": 0.7143,
+  "macro_f1": 0.7082,
+  "weighted_f1": 0.7082,
+  "roc_auc_macro": 0.9507,
+  "mcc": 0.6364,
+  "kappa": 0.619
+}

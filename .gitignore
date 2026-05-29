@@ -29,7 +29,8 @@ ENV/
 *.ipynb
 
 # ML artifacts (too large for git — use DVC or HuggingFace Hub)
-models/
+# Leading slash = root-level /models/ only; src/models/ (source code) is kept
+/models/
 *.h5
 *.keras
 *.pkl
