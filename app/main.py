@@ -57,7 +57,7 @@ from app.preprocessing import (
     overlay_mask_on_image,
     overlay_heatmap_on_image,
 )
-from app.routers import classify, segment, explain, health
+from app.routers import classify, segment, explain, health, report
 
 
 # ---------------------------------------------------------------------------
@@ -140,6 +140,7 @@ app.include_router(health.router)
 app.include_router(classify.router)
 app.include_router(segment.router)
 app.include_router(explain.router)
+app.include_router(report.router)
 
 
 # ---------------------------------------------------------------------------

@@ -1,0 +1,63 @@
+# ============================================================
+# NeuroVision AI — Docker Compose
+#
+# Usage:
+#   docker-compose up --build          # build + start all services
+#   docker-compose up api              # API only
+#   docker-compose logs -f api         # stream API logs
+#
+# Services:
+#   api       FastAPI backend   → http://localhost:8000
+#             Swagger docs      → http://localhost:8000/docs
+#   frontend  React + Nginx     → http://localhost:3000
+#             (proxies /api → api:8000 internally)
+# ============================================================
+
+version: "3.9"
+
+services:
+
+  # ── FastAPI backend ────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: neurovision-api:latest
+    container_name: neurovision-api
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount trained model weights (read-only inside container)
+      - ./models:/neurovision/models:ro
+      # Persist logs and generated outputs
+      - ./outputs:/neurovision/outputs
+    env_file: .env
+    environment:
+      - PROJECT_ROOT=/neurovision
+      - PYTHONUNBUFFERED=1
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s   # TF + model loading takes ~30s
+    restart: unless-stopped
+
+  # ── React frontend ─────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: neurovision-frontend:latest
+    container_name: neurovision-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+# ── Named volumes (optional — for persistence across rebuilds) ─
+volumes:
+  outputs:
