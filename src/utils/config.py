@@ -116,6 +116,13 @@ class SegmentationConfig:
 
 
 @dataclass(frozen=True)
+class XAIConfig:
+    gradcam_layer: str
+    overlay_alpha: float
+    colormap: str
+
+
+@dataclass(frozen=True)
 class PathConfig:
     dataset_root: Path
     project_root: Path
@@ -142,6 +149,7 @@ class AppConfig:
     pipeline: PipelineConfig
     paths: PathConfig
     model: dict  # Raw model config dict (backbone, ensemble list, etc.)
+    xai: XAIConfig
 
 
 # ---------------------------------------------------------------------------
@@ -314,6 +322,13 @@ def load_config(config_path: str | Path | None = None) -> AppConfig:
         pseudo_mask_morph_size=sg.get("pseudo_mask_morph_size", 7),
     )
 
+    xai_raw = raw.get("xai", {})
+    xai = XAIConfig(
+        gradcam_layer=xai_raw.get("gradcam_layer", "top_conv"),
+        overlay_alpha=xai_raw.get("overlay_alpha", 0.45),
+        colormap=xai_raw.get("colormap", "jet"),
+    )
+
     config = AppConfig(
         project_name=raw["project"]["name"],
         version=raw["project"]["version"],
@@ -326,6 +341,7 @@ def load_config(config_path: str | Path | None = None) -> AppConfig:
         paths=paths,
         model=raw.get("model", {}),
         segmentation=segmentation,
+        xai=xai,
     )
 
     logger.info(
