@@ -1,16 +1,13 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
-// https://vitejs.dev/config/
-export default defineConfig({
-  base:"
-NeuroVision-AI
-",
+export default defineConfig(({ command }) => ({
   plugins: [react()],
+  // GitHub Pages serves from /NeuroVision-AI/ — only applies for production build
+  base: command === "build" ? "/NeuroVision-AI/" : "/",
   server: {
     port: 3000,
     proxy: {
-      // Proxy /api/* → FastAPI on :8000 in dev
       "/api": {
         target: "http://localhost:8000",
         changeOrigin: true,
@@ -18,4 +15,8 @@ NeuroVision-AI
       },
     },
   },
-});
+  build: {
+    outDir: "dist",
+    sourcemap: false,
+  },
+}));

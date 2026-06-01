@@ -1,166 +1,282 @@
-import { useState } from "react";
-import { analyze }         from "./api/neurovision";
-import StatusBar           from "./components/StatusBar";
-import UploadPanel         from "./components/UploadPanel";
-import AnalysisResult      from "./components/AnalysisResult";
-import { Brain, Loader2, AlertCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { analyze, getHealth }  from "./api/neurovision";
+import { DEMO_RESULT }         from "./demoData";
+import StatusBar               from "./components/StatusBar";
+import UploadPanel             from "./components/UploadPanel";
+import AnalysisResult          from "./components/AnalysisResult";
+import HeroSection             from "./components/HeroSection";
+import {
+  Brain, Loader2, AlertCircle,
+  Sparkles, GitFork, FileText, Play,
+} from "lucide-react";
 import "./index.css";
 
-/* ─── layout styles ─────────────────────────────────────────────── */
-const S = {
-  app: { minHeight: "100vh", display: "flex", flexDirection: "column" },
-
-  header: {
-    display: "flex", alignItems: "center", gap: "0.75rem",
-    padding: "1rem 1.5rem",
-    borderBottom: "1px solid var(--border)",
-    background: "var(--surface)",
-  },
-  logo: { color: "var(--accent)" },
-  title: { fontSize: 18, fontWeight: 700, color: "var(--text)" },
-  subtitle: { fontSize: 12, color: "var(--muted)", marginTop: 1 },
-
-  main: {
-    flex: 1, maxWidth: 960, width: "100%",
-    margin: "0 auto", padding: "1.5rem",
-    display: "grid", gap: "1.25rem",
-    gridTemplateColumns: "340px 1fr",
-    alignItems: "start",
-  },
-
-  leftCol: { display: "flex", flexDirection: "column", gap: "1rem" },
-
-  card: {
-    background: "var(--surface)", border: "1px solid var(--border)",
-    borderRadius: "var(--radius)", padding: "1rem",
-  },
-  cardTitle: { fontWeight: 600, marginBottom: "0.75rem", fontSize: 13, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.05em" },
-
-  select: {
-    width: "100%", padding: "0.4rem 0.6rem",
-    background: "var(--bg)", border: "1px solid var(--border)",
-    borderRadius: "var(--radius)", color: "var(--text)", fontSize: 13,
-  },
-
-  btn: (loading) => ({
-    width: "100%", padding: "0.6rem",
-    background: loading ? "var(--border)" : "var(--accent)",
-    color: loading ? "var(--muted)" : "#0d1117",
-    border: "none", borderRadius: "var(--radius)",
-    fontWeight: 700, fontSize: 14, cursor: loading ? "not-allowed" : "pointer",
-    display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem",
-    transition: "background 0.2s",
-  }),
-
-  error: {
-    display: "flex", alignItems: "flex-start", gap: "0.5rem",
-    background: "rgba(248,81,73,0.1)", border: "1px solid rgba(248,81,73,0.3)",
-    borderRadius: "var(--radius)", padding: "0.75rem", fontSize: 13,
-    color: "var(--red)",
-  },
-
-  placeholder: {
-    gridColumn: 2, display: "flex", alignItems: "center", justifyContent: "center",
-    background: "var(--surface)", border: "1px solid var(--border)",
-    borderRadius: "var(--radius)", minHeight: 300,
-    color: "var(--muted)", fontSize: 14, gap: "0.5rem",
-  },
-};
-
 export default function App() {
-  const [file,    setFile]    = useState(null);
-  const [method,  setMethod]  = useState("gradcam");
-  const [loading, setLoading] = useState(false);
-  const [result,  setResult]  = useState(null);
-  const [error,   setError]   = useState(null);
+  const [file,       setFile]       = useState(null);
+  const [method,     setMethod]     = useState("gradcam");
+  const [loading,    setLoading]    = useState(false);
+  const [result,     setResult]     = useState(null);
+  const [error,      setError]      = useState(null);
+  const [apiOnline,  setApiOnline]  = useState(false);
+  const [demoMode,   setDemoMode]   = useState(false);
+
+  // Poll API status
+  useEffect(() => {
+    getHealth().then(() => setApiOnline(true)).catch(() => setApiOnline(false));
+  }, []);
 
   const run = async () => {
     if (!file) return;
-    setLoading(true);
-    setError(null);
-    setResult(null);
+    setLoading(true); setError(null); setResult(null); setDemoMode(false);
     try {
       const data = await analyze(file, method);
       setResult(data);
     } catch (e) {
-      const msg = e.response?.data?.detail ?? e.message ?? "Unknown error";
-      setError(msg);
+      setError(e.response?.data?.detail ?? e.message ?? "Request failed");
     } finally {
       setLoading(false);
     }
   };
 
+  const loadDemo = () => {
+    setDemoMode(true);
+    setResult(DEMO_RESULT);
+    setError(null);
+  };
+
   return (
     <div style={S.app}>
-      {/* ── header ── */}
-      <header style={S.header}>
-        <Brain size={24} style={S.logo} />
-        <div>
-          <div style={S.title}>NeuroVision AI</div>
-          <div style={S.subtitle}>Explainable Brain Tumour Diagnosis & Segmentation</div>
+      {/* ── Nav ───────────────────────────────────────────── */}
+      <header style={S.nav}>
+        <div style={S.navLeft}>
+          <div style={S.logoIcon}><Brain size={20} color="#60a5fa"/></div>
+          <div>
+            <span style={S.logoText} className="glow-text">NeuroVision AI</span>
+            <span style={S.logoSub}> · v1.0.0</span>
+          </div>
+        </div>
+        <div style={S.navRight}>
+          <a href="https://github.com/DhivyaShri1385/NeuroVision-AI" target="_blank"
+             rel="noreferrer" style={S.navLink}>
+            <GitFork size={14}/> GitHub
+          </a>
+          <a href={`${import.meta.env.VITE_API_URL||"http://localhost:8000"}/docs`}
+             target="_blank" rel="noreferrer" style={S.navLink}>
+            <FileText size={14}/> API Docs
+          </a>
         </div>
       </header>
 
-      <StatusBar />
+      <StatusBar demoMode={demoMode} />
 
-      {/* ── main grid ── */}
+      {/* ── Main ──────────────────────────────────────────── */}
       <main style={S.main}>
 
-        {/* LEFT: upload + controls */}
-        <div style={S.leftCol}>
+        {/* LEFT sidebar */}
+        <aside style={S.sidebar}>
 
-          <div style={S.card}>
-            <p style={S.cardTitle}>Upload MRI</p>
+          {/* Upload */}
+          <section style={S.section}>
+            <div style={S.sectionLabel}>
+              <span style={S.dot}/> MRI Image
+            </div>
             <UploadPanel onFile={setFile} file={file} />
-          </div>
+          </section>
 
-          <div style={S.card}>
-            <p style={S.cardTitle}>XAI Method</p>
-            <select
-              style={S.select}
-              value={method}
-              onChange={(e) => setMethod(e.target.value)}
-            >
-              <option value="gradcam">Grad-CAM (fast)</option>
-              <option value="smoothgrad">SmoothGrad (sharper)</option>
-            </select>
-          </div>
+          {/* Controls */}
+          <section style={S.section}>
+            <div style={S.sectionLabel}><span style={S.dot}/> XAI Method</div>
+            <div style={S.methodPicker}>
+              {["gradcam", "smoothgrad"].map(m => (
+                <button key={m}
+                  style={{ ...S.methodBtn, ...(method===m ? S.methodActive : {}) }}
+                  onClick={() => setMethod(m)}>
+                  <Sparkles size={12}/>
+                  {m === "gradcam" ? "Grad-CAM" : "SmoothGrad"}
+                  {m === "gradcam" && <span style={S.methodTag}>fast</span>}
+                  {m === "smoothgrad" && <span style={S.methodTag}>precise</span>}
+                </button>
+              ))}
+            </div>
+          </section>
 
-          <button
-            style={S.btn(loading || !file)}
-            onClick={run}
-            disabled={loading || !file}
-          >
+          {/* Analyse button */}
+          <button style={S.analyseBtn(loading || !file)} onClick={run} disabled={loading || !file}>
             {loading
-              ? <><Loader2 size={15} className="spin" /> Analysing…</>
-              : <><Brain size={15} /> Analyse</>
-            }
+              ? <><Loader2 size={16} style={S.spin}/> Analysing…</>
+              : <><Brain size={16}/> Analyse MRI</>}
           </button>
 
+          {/* Demo button */}
+          {!apiOnline && !result && (
+            <button style={S.demoBtn} onClick={loadDemo}>
+              <Play size={14}/> Load Demo Results
+            </button>
+          )}
+
+          {/* Error */}
           {error && (
-            <div style={S.error}>
-              <AlertCircle size={15} style={{ flexShrink: 0, marginTop: 1 }} />
+            <div style={S.errorBox}>
+              <AlertCircle size={14} style={{flexShrink:0}}/>
               <span>{error}</span>
             </div>
           )}
-        </div>
 
-        {/* RIGHT: results */}
-        {result
-          ? <AnalysisResult result={result} />
-          : (
-            <div style={S.placeholder}>
-              <Brain size={20} />
-              Upload an MRI and click Analyse
+          {/* Demo notice */}
+          {demoMode && (
+            <div style={S.demoNotice}>
+              ⚡ Demo mode — mock results. Start the backend to analyse real images.
             </div>
-          )
-        }
+          )}
+        </aside>
+
+        {/* RIGHT content */}
+        <div style={S.content}>
+          {result
+            ? <AnalysisResult result={result} />
+            : <HeroSection />}
+        </div>
       </main>
 
-      <style>{`
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .spin { animation: spin 0.9s linear infinite; }
-      `}</style>
+      {/* Footer */}
+      <footer style={S.footer}>
+        <span>Built with ❤️ · NeuroVision AI Research Platform</span>
+        <span>Phase 1–7 · TF 2.20 · EfficientNetB3 · Attention U-Net</span>
+      </footer>
+
+      {/* Spin keyframe */}
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>
   );
 }
+
+const S = {
+  app: { minHeight:"100vh", display:"flex", flexDirection:"column" },
+
+  /* Nav */
+  nav: {
+    display:"flex", alignItems:"center", justifyContent:"space-between",
+    padding:"0.75rem 1.5rem",
+    background:"rgba(10,15,30,0.85)",
+    borderBottom:"1px solid var(--border)",
+    backdropFilter:"blur(20px)",
+    position:"sticky", top:0, zIndex:100,
+  },
+  navLeft: { display:"flex", alignItems:"center", gap:"0.6rem" },
+  logoIcon: {
+    width:36, height:36, borderRadius:10,
+    background:"linear-gradient(135deg,rgba(59,130,246,0.25),rgba(139,92,246,0.25))",
+    border:"1px solid rgba(96,165,250,0.3)",
+    display:"flex", alignItems:"center", justifyContent:"center",
+  },
+  logoText: { fontSize:17, fontWeight:800, letterSpacing:"-0.03em" },
+  logoSub:  { fontSize:11, color:"var(--text-dim)" },
+  navRight: { display:"flex", alignItems:"center", gap:"0.5rem" },
+  navLink: {
+    display:"flex", alignItems:"center", gap:"0.35rem",
+    padding:"0.3rem 0.7rem", borderRadius:"var(--r-sm)",
+    background:"var(--glass)", border:"1px solid var(--border)",
+    color:"var(--text-dim)", fontSize:12, fontWeight:500,
+    transition:"all 0.15s",
+    textDecoration:"none",
+  },
+
+  /* Main layout */
+  main: {
+    flex:1, maxWidth:1100, width:"100%", margin:"0 auto",
+    padding:"1.5rem", display:"grid",
+    gridTemplateColumns:"320px 1fr", gap:"1.25rem", alignItems:"start",
+  },
+  sidebar: { display:"flex", flexDirection:"column", gap:"0.9rem", position:"sticky", top:80 },
+  content: { minWidth:0 },
+
+  /* Section */
+  section: {
+    background:"var(--glass)", border:"1px solid var(--border)",
+    borderRadius:"var(--r-lg)", padding:"1rem",
+    backdropFilter:"blur(16px)",
+  },
+  sectionLabel: {
+    display:"flex", alignItems:"center", gap:"0.4rem",
+    fontSize:11, fontWeight:600, color:"var(--text-dim)",
+    textTransform:"uppercase", letterSpacing:"0.08em",
+    marginBottom:"0.75rem",
+  },
+  dot: {
+    width:6, height:6, borderRadius:"50%",
+    background:"var(--accent)", display:"inline-block",
+    boxShadow:"0 0 8px var(--accent)",
+  },
+
+  /* Method picker */
+  methodPicker: { display:"flex", flexDirection:"column", gap:"0.4rem" },
+  methodBtn: {
+    display:"flex", alignItems:"center", gap:"0.4rem",
+    padding:"0.5rem 0.75rem", borderRadius:"var(--r-md)",
+    border:"1px solid var(--border)", background:"transparent",
+    color:"var(--text-dim)", cursor:"pointer", fontSize:13, fontWeight:500,
+    transition:"all 0.2s",
+  },
+  methodActive: {
+    background:"linear-gradient(135deg,rgba(59,130,246,0.15),rgba(139,92,246,0.15))",
+    borderColor:"rgba(96,165,250,0.35)", color:"var(--text-bright)",
+    boxShadow:"0 0 16px rgba(96,165,250,0.08)",
+  },
+  methodTag: {
+    marginLeft:"auto", fontSize:9, padding:"1px 6px", borderRadius:99,
+    background:"rgba(255,255,255,0.08)", color:"var(--text-dim)",
+    fontWeight:600, letterSpacing:"0.05em",
+  },
+
+  /* Analyse button */
+  analyseBtn: (disabled) => ({
+    width:"100%", padding:"0.75rem",
+    background: disabled ? "rgba(255,255,255,0.04)" : "linear-gradient(135deg,#3b82f6,#8b5cf6)",
+    color: disabled ? "var(--text-dim)" : "#fff",
+    border: disabled ? "1px solid var(--border)" : "none",
+    borderRadius:"var(--r-md)", fontWeight:700, fontSize:14,
+    cursor: disabled ? "not-allowed" : "pointer",
+    display:"flex", alignItems:"center", justifyContent:"center", gap:"0.5rem",
+    transition:"all 0.2s",
+    boxShadow: disabled ? "none" : "0 4px 24px rgba(96,165,250,0.25)",
+    letterSpacing:"0.02em",
+  }),
+  spin: { animation:"spin 0.9s linear infinite" },
+
+  /* Demo button */
+  demoBtn: {
+    width:"100%", padding:"0.55rem",
+    background:"rgba(251,191,36,0.08)",
+    border:"1px dashed rgba(251,191,36,0.3)",
+    borderRadius:"var(--r-md)", color:"var(--yellow)",
+    cursor:"pointer", fontSize:13, fontWeight:600,
+    display:"flex", alignItems:"center", justifyContent:"center", gap:"0.4rem",
+    transition:"all 0.2s",
+  },
+
+  /* Error */
+  errorBox: {
+    display:"flex", alignItems:"flex-start", gap:"0.5rem",
+    padding:"0.75rem", borderRadius:"var(--r-md)",
+    background:"rgba(248,113,113,0.08)",
+    border:"1px solid rgba(248,113,113,0.25)",
+    color:"var(--red)", fontSize:12,
+  },
+
+  /* Demo notice */
+  demoNotice: {
+    padding:"0.6rem 0.8rem", borderRadius:"var(--r-md)",
+    background:"rgba(251,191,36,0.07)",
+    border:"1px solid rgba(251,191,36,0.2)",
+    color:"var(--yellow)", fontSize:11, lineHeight:1.5,
+  },
+
+  /* Footer */
+  footer: {
+    display:"flex", justifyContent:"space-between", flexWrap:"wrap",
+    padding:"0.75rem 1.5rem",
+    borderTop:"1px solid var(--border)",
+    fontSize:11, color:"var(--text-dim)",
+    background:"rgba(10,15,30,0.5)",
+  },
+};
